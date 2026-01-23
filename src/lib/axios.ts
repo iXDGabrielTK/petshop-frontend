@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { useAuthStore } from '../features/auth/store';
 import type { AxiosError, AxiosRequestConfig } from "axios";
-import {refreshTokenRequest} from "@/services/authService.ts";
-import  { handleLogout } from "@/lib/handleLogout.ts";
+import {handleLogout} from "@/features/auth/api/handleLogout.ts";
+import {authService} from "@/features/auth/api/authService.ts";
 export const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
 });
@@ -93,7 +93,7 @@ api.interceptors.response.use(
 
         try {
 
-            const data = await refreshTokenRequest(refreshToken);
+            const data = await authService.refreshTokenRequest(refreshToken);
 
 
             if (state.user) {

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { useAuthStore } from "../features/auth/store";
-import {refreshTokenRequest} from "@/services/authService.ts";
+import {useAuthStore} from "@/features/auth/store.ts";
+import {authService} from "@/features/auth/api/authService.ts";
 
 export function useSilentRefresh() {
     const { token, expiresAt, refreshToken, setAuth, user, isAuthenticated, logout } = useAuthStore();
@@ -11,7 +11,7 @@ export function useSilentRefresh() {
         const performSilentRefresh = async () => {
             try {
                 console.log("🔄 Silent Refresh: Buscando novo Access Token...");
-                const data = await refreshTokenRequest(refreshToken);
+                const data = await authService.refreshTokenRequest(refreshToken);
 
                 if (user) {
                     setAuth(user, data.access_token, data.refresh_token || refreshToken, data.expires_in);

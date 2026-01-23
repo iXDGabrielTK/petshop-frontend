@@ -2,11 +2,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthLayout } from "@/layouts/AuthLayout";
 import { LoginPage } from "@/pages/Login";
 import { RegisterPage } from "@/pages/Register";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AuthorizedPage } from "@/pages/Authorized";
 import { Toaster } from "@/components/ui/sonner";
-import {useSilentRefresh} from "@/lib/useSilentRefresh.ts";
 import {Dashboard} from "@/pages/Dashboard.tsx";
+import {useSilentRefresh} from "@/features/auth/hooks/useSilentRefresh.ts";
+import {ProtectedRoute} from "@/features/auth/components/ProtectedRoute.tsx";
 
 
 export default function App() {
