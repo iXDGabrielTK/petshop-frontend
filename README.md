@@ -45,13 +45,15 @@ Layouts --> Features[Features: Auth, Users, Pets]
 
 * Singleton Promise Token Refresh: Se 10 requisições falharem simultaneamente com 401 (Token Expirado), apenas uma chamada de refresh é feita. As outras 9 ficam na FailedQueue e são re-executadas automaticamente assim que o novo token chega.
 
+* Recuperação de Senha Segura: Tokens de redefinição com tempo de expiração curto e invalidação automática após uso, prevenindo ataques de replay.
+
 * Silent Refresh: Hook dedicado para manutenção de sessão em background.
 ---
 
 ## 🛠️ Tech Stack
 * Core: React 18 + Vite (SWC) + TypeScript.
 
-* UI/UX: Tailwind CSS + Shadcn/ui (Radix UI) + Lucide Icons.
+* UI/UX: Tailwind CSS + Shadcn/ui (Radix UI) + Lucide Icons + Sonner (Toasts).
 
 * State Management:
   * Zustand: Estado global leve e persistente.
@@ -139,6 +141,8 @@ npm run dev
 ### Status Atual do Projeto
 
 * [x] Autenticação OAuth2 completa  
+
+* [x] Fluxo de Recuperação de Senha (Esqueci a Senha / Redefinir Senha)
 
 * [x] Camada de rede resiliente  
 

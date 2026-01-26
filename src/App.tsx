@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/sonner";
 import {Dashboard} from "@/pages/Dashboard.tsx";
 import {useSilentRefresh} from "@/features/auth/hooks/useSilentRefresh.ts";
 import {ProtectedRoute} from "@/features/auth/components/ProtectedRoute.tsx";
+import {ForgotPasswordPage} from "@/pages/ForgotPasswordPage.tsx";
+import {ResetPasswordPage} from "@/pages/ResetPasswordPage.tsx";
 
 
 export default function App() {
@@ -18,6 +20,8 @@ export default function App() {
                 <Route element={<AuthLayout />}>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+                    <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
                 </Route>
 
                 <Route path="/authorized" element={<AuthorizedPage />} />

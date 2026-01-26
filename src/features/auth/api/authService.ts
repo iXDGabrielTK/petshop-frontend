@@ -2,6 +2,8 @@ import type { AuthResponse } from "@/features/auth/types";
 import {oauthApi} from "@/features/auth/hooks/oauth.ts";
 import {ENV} from "@/config/env.ts";
 import {generateCodeChallenge, generateRandomString} from "@/features/auth/utils/pkce.ts";
+import {api} from "@/lib/axios.ts";
+import type { ForgotPasswordSchema, ResetPasswordSchema } from "@/features/auth/utils/schemas";
 
 let refreshPromise: Promise<AuthResponse> | null = null;
 
@@ -55,7 +57,18 @@ async function loginWithRedirect(): Promise<void> {
     window.location.href = `${ENV.AUTH_URL}/oauth2/authorize?${params.toString()}`;
 }
 
+async function forgotPassword(data: ForgotPasswordSchema): Promise<void> {
+    await api.post("/usuarios/forgot-password", data);
+}
+
+async function resetPassword(data: ResetPasswordSchema): Promise<void> {
+    await api.post("/usuarios/reset-password", data);
+}
+
+
 export const authService = {
     refreshTokenRequest,
-    loginWithRedirect
+    loginWithRedirect,
+    forgotPassword,
+    resetPassword
 };

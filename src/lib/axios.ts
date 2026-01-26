@@ -3,8 +3,10 @@ import { useAuthStore } from '../features/auth/store';
 import type { AxiosError, AxiosRequestConfig } from "axios";
 import {handleLogout} from "@/features/auth/api/handleLogout.ts";
 import {authService} from "@/features/auth/api/authService.ts";
+import {ENV} from "@/config/env.ts";
+
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    baseURL: ENV.API_URL,
 });
 
 interface FailedQueuePromise {
