@@ -10,6 +10,9 @@ export const handleLogout = (reason: unknown) => {
     isLoggingOut = true;
 
     console.error("Sessão expirada:", reason);
+
+    localStorage.removeItem("code_verifier");
+    localStorage.removeItem("oauth_state");
     useAuthStore.getState().logout();
     window.location.href = "/login";
 

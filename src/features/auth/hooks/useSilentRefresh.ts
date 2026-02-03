@@ -44,9 +44,11 @@ export function useSilentRefresh() {
         }
 
         const onFocus = () => {
-            const now = Date.now();
-            if (expiresAt && (expiresAt - now) < BUFFER_TIME) {
-                void performSilentRefresh();
+            if (document.visibilityState === 'visible') {
+                const now = Date.now();
+                if (expiresAt && (expiresAt - now) < BUFFER_TIME) {
+                    void performSilentRefresh();
+                }
             }
         };
 

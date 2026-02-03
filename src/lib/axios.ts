@@ -5,6 +5,7 @@ import {handleLogout} from "@/features/auth/api/handleLogout.ts";
 import {authService} from "@/features/auth/api/authService.ts";
 import {ENV} from "@/config/env.ts";
 
+
 export const api = axios.create({
     baseURL: ENV.API_URL,
 });
@@ -18,6 +19,7 @@ interface OAuthErrorResponse {
     error?: string;
     error_description?: string;
 }
+
 
 let isRefreshing = false;
 let failedQueue: FailedQueuePromise[] = [];
@@ -97,6 +99,7 @@ api.interceptors.response.use(
 
             const data = await authService.refreshTokenRequest(refreshToken);
 
+            const tokenType = data.token_type || "Bearer";
 
             if (state.user) {
                 state.setAuth(
@@ -111,7 +114,7 @@ api.interceptors.response.use(
 
             originalRequest.headers = {
                 ...originalRequest.headers,
-                Authorization: `Bearer ${data.access_token}`
+                Authorization: `${tokenType} ${data.access_token}`
             };
 
             return api(originalRequest);
