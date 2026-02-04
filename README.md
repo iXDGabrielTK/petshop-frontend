@@ -20,7 +20,7 @@ Ideal para sistemas corporativos, ERPs e microsserviços.
 ---
 ## 🏗️ Arquitetura de Software
 
-O projeto utiliza uma Feature-based Architecture (Vertical Slices). Em vez de organizar por "tipo de arquivo" (ex: todos os controllers juntos), organizamos por funcionalidade de negócio.
+Este projeto segue uma arquitetura modular baseada em **Features (Feature-Sliced Design simplificado)**. O objetivo é manter o código desacoplado, escalável e fácil de manter.
 ```mermaid
 graph TD
 App[App.tsx] --> Providers[Providers / Router]
@@ -69,27 +69,58 @@ Layouts --> Features[Features: Auth, Users, Pets]
 
 ## 📂 Estrutura do Projeto
 O projeto segue uma arquitetura baseada em Features (módulos de negócio), facilitando a manutenção e o desacoplamento de código.
-```
+```text
 src/
-├── assets/          # Assets estáticos (Logos, imagens)
-├── components/      # UI Kit (Shadcn) e componentes globais reutilizáveis
-├── config/          # Variáveis de ambiente e constantes globais (env.ts)
-├── features/        # Módulos de negócio (Vertical Slices)
-│   ├── auth/        # Lógica de autenticação, hooks e views
-│   ├── users/       # Gerenciamento de usuários
-│   └── sales/       # Módulos futuros (ex: Vendas)
-├── layouts/         # Estruturas de página (Sidebar, Navbar, AuthLayout)
-├── lib/             # Configurações de bibliotecas (Axios instance, Utils)
-├── pages/           # Entry points das rotas (Lazy loading)
-├── store/           # Stores globais do Zustand
-└── App.tsx          # Definição de rotas e Providers
+├── components/          # UI Kit (Botões, Inputs, Tabelas genéricas - Shadcn/UI)
+├── features/            # 📦 Módulos de Negócio (Onde a lógica vive)
+│   ├── auth/            # Ex: Feature de Autenticação
+│   │   ├── api/         # Serviços HTTP específicos desta feature
+│   │   ├── components/  # Componentes visuais exclusivos desta feature
+│   │   ├── hooks/       # Lógica de estado (Stores do Zustand) e Hooks customizados
+│   │   ├── pages/       # Páginas/Views completas da feature
+│   │   └── index.ts     # 🚪 API PÚBLICA (Exporta o que outras features podem usar)
+│   ├── inventory/       # Feature de Estoque
+│   ├── sales/           # Feature de Vendas (PDV)
+│   └── ...
+├── layouts/             # Wrappers de layout (Sidebar, Navbar, AuthLayout)
+├── lib/                 # Configurações globais (Axios, Formatadores, Utils de bibliotecas)
+├── pages/               # Páginas Genéricas (404, Manutenção) ou Agregadoras
+└── types/               # Definições de Tipos compartilhados globalmente (ex: Paginação)
 ```
 
-### Princípios da Arquitetura
+### 📏 Régua de Arquitetura (Regras do Projeto)
 
-- Cada feature é autocontida (hooks, services, views, types)
-- Nada fora da feature importa arquivos internos dela
-- Comunicação entre features ocorre apenas via camadas compartilhadas (lib, store)
+Para manter a escalabilidade e a saúde do código, seguimos rigorosamente 4 regras de ouro:
+
+#### 1. Princípio da Feature Autocontida
+Cada pasta dentro de `features/` funciona como um "mini-projeto" isolado.
+- **✅ Certo:** O hook `useCartStore` fica em `features/sales/hooks/` porque pertence a vendas.
+- **❌ Errado:** Colocar lógica de negócio específica em pastas globais como `src/hooks`.
+
+#### 2. A Regra da API Pública (Barrel Files)
+Uma feature **nunca** deve importar arquivos internos de outra feature diretamente. A comunicação deve ocorrer apenas através do arquivo `index.ts` (O Porteiro).
+- **✅ Certo:** `import { inventoryService } from "@/features/inventory";`
+- **❌ Errado:** `import { inventoryService } from "@/features/inventory/api/inventoryService";`
+
+#### 3. Componentes Globais vs. Locais
+- **Globais (`src/components`):** Componentes de UI genéricos reutilizáveis em todo o app (Botões, Inputs, Modais Shadcn).
+- **Locais (`features/x/components`):** Componentes que possuem lógica de negócio ou são usados apenas naquela feature (ex: `ProductListTable`, `CartSummary`).
+
+#### 4. O Papel das Pastas "Pages"
+- **Feature Pages (`features/x/pages`):** Telas principais do sistema (Login, PDV, Dashboard). Conectam a Store aos Componentes.
+- **Global Pages (`src/pages`):** Apenas para páginas sem domínio específico (404, Manutenção) ou páginas "Agregadoras" que orquestram múltiplas features.
+
+---
+
+### 🧭 Guia de Decisão: Onde crio meu arquivo?
+
+| Tipo de Arquivo       | Pergunta a fazer                              | Destino                                                           |
+|:----------------------|:----------------------------------------------|:------------------------------------------------------------------|
+| **Componente Visual** | É genérico (UI Kit) ou específico de negócio? | Genérico: `src/components`<br>Específico: `features/x/components` |
+| **Lógica / Hook**     | Lida com dados de uma feature específica?     | Sim: `features/x/hooks`<br>Não (Global): `src/lib` ou `src/hooks` |
+| **Serviço API**       | A qual módulo de negócio pertence?            | `features/x/api`                                                  |
+| **Página (Rota)**     | Pertence a uma feature clara?                 | Sim: `features/x/pages`<br>Não: `src/pages`                       |
+| **Tipo / Interface**  | É usado apenas dentro da feature?             | Sim: `features/x/types.ts`<br>Não (Compartilhado): `src/types`    |
 
 ---
 ## 🚀 Como Iniciar
