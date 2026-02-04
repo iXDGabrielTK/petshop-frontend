@@ -1,12 +1,26 @@
-import { useEffect } from "react";
-import {useAuthStore} from "@/features/auth/store.ts";
-import {authService} from "@/features/auth/api/authService.ts";
+import { useEffect, useState } from "react";
+import { useAuthStore } from "@/features/auth/store";
+import { authService } from "@/features/auth/api/authService";
 
 export function useSilentRefresh() {
-    const { token, expiresAt, refreshToken, setAuth, user, isAuthenticated, logout } = useAuthStore();
+    const {
+        token,
+        expiresAt,
+        refreshToken,
+        setAuth,
+        user,
+        logout,
+        setHydrated
+    } = useAuthStore();
+
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!isAuthenticated || !refreshToken) return;
+        if (!refreshToken) {
+            setHydrated();
+            setIsLoading(false);
+            return;
+        }
 
         const performSilentRefresh = async () => {
             try {
@@ -14,12 +28,19 @@ export function useSilentRefresh() {
                 const data = await authService.refreshTokenRequest(refreshToken);
 
                 if (user) {
-                    setAuth(user, data.access_token, data.refresh_token || refreshToken, data.expires_in);
+                    setAuth(
+                        user,
+                        data.access_token,
+                        data.refresh_token ?? refreshToken,
+                        data.expires_in
+                    );
                 }
             } catch (error) {
                 console.error("⛔ Falha no Silent Refresh. Sessão expirada.", error);
-                logout(); 
-                window.location.href = "/login";
+                logout();
+            } finally {
+                setHydrated();
+                setIsLoading(false);
             }
         };
 
@@ -28,6 +49,9 @@ export function useSilentRefresh() {
             return;
         }
 
+        setHydrated();
+        setIsLoading(false);
+
         const timeLeft = expiresAt - Date.now();
         const BUFFER_TIME = 2 * 60 * 1000;
         const timeoutDuration = timeLeft - BUFFER_TIME;
@@ -35,27 +59,27 @@ export function useSilentRefresh() {
         let timer: ReturnType<typeof setTimeout>;
 
         if (timeoutDuration > 0) {
-            console.log(`⏱️ Próximo refresh agendado para daqui a ${(timeoutDuration/1000).toFixed(0)}s`);
-            timer = setTimeout(() => {
-                void performSilentRefresh();
-            }, timeoutDuration);
+            timer = setTimeout(performSilentRefresh, timeoutDuration);
         } else {
             void performSilentRefresh();
         }
 
         const onFocus = () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState === "visible") {
                 const now = Date.now();
-                if (expiresAt && (expiresAt - now) < BUFFER_TIME) {
+                if ((expiresAt - now) < BUFFER_TIME) {
                     void performSilentRefresh();
                 }
             }
         };
 
         window.addEventListener("focus", onFocus);
+
         return () => {
             clearTimeout(timer);
             window.removeEventListener("focus", onFocus);
         };
-    }, [token, expiresAt, refreshToken, setAuth, user, isAuthenticated, logout]);
+    }, [token, expiresAt, refreshToken, setAuth, user, logout, setHydrated]);
+
+    return { isLoading };
 }

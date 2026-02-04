@@ -5,6 +5,7 @@ import { oauthApi } from "@/features/auth/hooks/oauth";
 import { toast } from "sonner";
 import { jwtDecode } from "jwt-decode";
 import type { AuthResponse, JWTPayload } from "@/features/auth/types";
+import {ENV} from "@/config/env.ts";
 
 export type AuthStatus = 'loading' | 'error' | 'success';
 
@@ -49,8 +50,8 @@ export function useOAuthCallback() {
             }
 
             try {
-                const clientId = import.meta.env.VITE_OAUTH_CLIENT_ID;
-                const redirectUri = `${window.location.origin}/authorized`;
+                const clientId = ENV.CLIENT_ID
+                const redirectUri = ENV.REDIRECT_URI
 
                 const params = new URLSearchParams({
                     grant_type: "authorization_code",

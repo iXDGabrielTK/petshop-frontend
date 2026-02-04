@@ -1,10 +1,18 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuthStore } from '../store';
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuthStore } from "@/features/auth/store";
 
 export function ProtectedRoute() {
-    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const { token, isHydrated } = useAuthStore();
 
-    if (!isAuthenticated) {
+    if (!isHydrated) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                Verificando sessão...
+            </div>
+        );
+    }
+
+    if (!token) {
         return <Navigate to="/login" replace />;
     }
 
