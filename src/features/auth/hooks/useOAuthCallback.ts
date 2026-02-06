@@ -79,7 +79,6 @@ export function useOAuthCallback() {
                         roles: payload.roles ?? ["USER"]
                     },
                     data.access_token,
-                    data.refresh_token || "",
                     data.expires_in
                 );
 

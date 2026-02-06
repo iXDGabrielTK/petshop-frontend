@@ -5,14 +5,12 @@ import type { User } from "./types";
 interface AuthState {
     user: User | null;
     token: string | null;
-    refreshToken: string | null;
     expiresAt: number | null;
     isHydrated: boolean;
 
     setAuth: (
         user: User,
         token: string,
-        refreshToken: string,
         expiresIn: number
     ) => void;
 
@@ -25,15 +23,13 @@ export const useAuthStore = create<AuthState>()(
         (set) => ({
             user: null,
             token: null,
-            refreshToken: null,
             expiresAt: null,
             isHydrated: false,
 
-            setAuth: (user, token, refreshToken, expiresIn) => {
+            setAuth: (user, token, expiresIn) => {
                 set({
                     user,
                     token,
-                    refreshToken,
                     expiresAt: Date.now() + expiresIn * 1000
                 });
             },
@@ -42,7 +38,6 @@ export const useAuthStore = create<AuthState>()(
                 set({
                     user: null,
                     token: null,
-                    refreshToken: null,
                     expiresAt: null
                 }),
 
@@ -55,7 +50,6 @@ export const useAuthStore = create<AuthState>()(
             partialize: (state) => ({
                 user: state.user,
                 token: state.token,
-                refreshToken: state.refreshToken,
                 expiresAt: state.expiresAt
             }),
 

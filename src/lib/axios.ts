@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAuthStore } from '../features/auth/store';
+import { useAuthStore } from '@/features/auth';
 import type { AxiosError, AxiosRequestConfig } from "axios";
 import {handleLogout} from "@/features/auth/api/handleLogout.ts";
 import {authService} from "@/features/auth/api/authService.ts";
@@ -8,6 +8,7 @@ import {ENV} from "@/config/env.ts";
 
 export const api = axios.create({
     baseURL: ENV.API_URL,
+    withCredentials: true
 });
 
 interface FailedQueuePromise {
@@ -71,11 +72,6 @@ api.interceptors.response.use(
         originalRequest._retry = true;
 
         const state = useAuthStore.getState();
-        const refreshToken = state.refreshToken;
-
-        if (!refreshToken) {
-            return handleLogout(new Error("Sem refresh token"));
-        }
 
         if (isRefreshing) {
             return new Promise((resolve, reject) => {
@@ -97,7 +93,7 @@ api.interceptors.response.use(
 
         try {
 
-            const data = await authService.refreshTokenRequest(refreshToken);
+            const data = await authService.refreshTokenRequest();
 
             const tokenType = data.token_type || "Bearer";
 
@@ -105,7 +101,6 @@ api.interceptors.response.use(
                 state.setAuth(
                     state.user,
                     data.access_token,
-                    data.refresh_token ?? refreshToken,
                     data.expires_in
                 );
             }

@@ -7,7 +7,7 @@ import type { ForgotPasswordSchema, ResetPasswordSchema } from "@/features/auth/
 
 let refreshPromise: Promise<AuthResponse> | null = null;
 
-async function refreshTokenRequest(refreshToken: string): Promise<AuthResponse> {
+async function refreshTokenRequest(): Promise<AuthResponse> {
     if (refreshPromise) {
         return refreshPromise;
     }
@@ -17,12 +17,12 @@ async function refreshTokenRequest(refreshToken: string): Promise<AuthResponse> 
 
         const params = new URLSearchParams();
         params.append("grant_type", "refresh_token");
-        params.append("refresh_token", refreshToken);
         params.append("client_id", clientId);
 
         const { data } = await oauthApi.post<AuthResponse>(
             "/oauth2/token",
-            params
+            params,
+            { withCredentials: true }
         );
 
         return data;
