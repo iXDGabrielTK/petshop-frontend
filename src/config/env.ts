@@ -5,6 +5,9 @@ export const ENV = {
     // Servidor de Autenticação (OAuth)
     AUTH_URL: import.meta.env.VITE_AUTH_URL,
 
+    // Nome da aplicação
+    APP_NAME: import.meta.env.VITE_APP_NAME,
+
     // Configurações do OAuth
     CLIENT_ID: import.meta.env.VITE_OAUTH_CLIENT_ID,
     REDIRECT_URI: import.meta.env.VITE_REDIRECT_URI || window.location.origin + '/authorized'

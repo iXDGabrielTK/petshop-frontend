@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth";
+import {ENV} from "@/config/env.ts";
 
 export function DashboardLayout() {
     const location = useLocation();
@@ -34,7 +35,7 @@ export function DashboardLayout() {
             <aside className="w-64 bg-white border-r shadow-sm flex flex-col fixed inset-y-0 z-50">
                 <div className="p-6 flex items-center gap-2 border-b">
                     <Store className="h-6 w-6 text-primary" />
-                    <span className="font-bold text-xl text-gray-800">Malvadão Pet</span>
+                    <span className="font-bold text-xl text-gray-800">{ENV.APP_NAME}</span>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
