@@ -1,92 +1,64 @@
-import { useState, useRef, useEffect, type FormEvent } from "react";
-import { toast } from "sonner";
-
-import { useCartStore } from "../hooks/useCartStore";
-import { salesService } from "../api/salesService";
-import { inventoryService } from "@/features/inventory";
-
+import { useEffect, type FormEvent, useCallback } from "react";
+import { useCartStore } from "@/features/sales/hooks/useCartStore";
 import { CartList } from "../components/CartList";
 import { ProductSearchInput } from "../components/ProductSearchInput";
 import { SaleSummary } from "../components/SaleSummary";
 
+import { usePdvFocus } from "../hooks/usePdvFocus";
+import { usePdvSearch } from "../hooks/usePdvSearch";
+import { usePdvSale } from "../hooks/usePdvSale";
+import {usePdvHotkeys} from "@/features/sales/hooks/usePdvHotkeys.ts";
+
 export function PdvPage() {
     const { items, addItem, removeItem, updateQuantity, getTotal, clearCart } = useCartStore();
 
-    const [searchTerm, setSearchTerm] = useState("");
-    const [isSearching, setIsSearching] = useState(false);
-    const [isFinalizing, setIsFinalizing] = useState(false);
+    const { inputRef, setFocus } = usePdvFocus();
 
-    const searchInputRef = useRef<HTMLInputElement>(null);
+    const handleProductFound = useCallback((produto: any) => {
+        addItem(produto);
+    }, [addItem]);
 
-    useEffect(() => {
-        if (!isSearching && !isFinalizing) {
-            searchInputRef.current?.focus();
-        }
-    }, [items.length, isSearching, isFinalizing]);
+    const {
+        searchTerm,
+        setSearchTerm,
+        debouncedSearchTerm,
+        isSearching,
+        searchProduct
+    } = usePdvSearch({ onProductFound: handleProductFound });
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "F2") {
-                e.preventDefault();
-                searchInputRef.current?.focus();
-            }
-            if (e.key === "F9" && items.length > 0) {
-                e.preventDefault();
-                void handleFinalizeSale();
-            }
-        };
+    const {
+        isFinalizing,
+        finalizeSale
+    } = usePdvSale({ items, clearCart });
 
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [items]);
+    const handleFinalizeSaleFlow = useCallback(async () => {
+        await finalizeSale();
+        setFocus();
+    }, [finalizeSale, setFocus]);
 
-    const handleSearch = async (e: FormEvent) => {
+    usePdvHotkeys({
+        onFocus: setFocus,
+        onFinalize: handleFinalizeSaleFlow,
+        isFinalizing,
+        hasItems: items.length > 0
+    });
+
+    const handleManualSearch = (e: FormEvent) => {
         e.preventDefault();
-        if (!searchTerm.trim()) return;
-
-        setIsSearching(true);
-        try {
-            const result = await inventoryService.getAll({ busca: searchTerm, size: 1 });
-
-            if (result.content && result.content.length > 0) {
-                const produto = result.content[0];
-                addItem(produto);
-                setSearchTerm("");
-                toast.success(`${produto.nome} adicionado!`);
-            } else {
-                toast.error("Produto não encontrado.");
-            }
-        } catch (error) {
-            toast.error("Erro ao buscar produto.");
-        } finally {
-            setIsSearching(false);
-            searchInputRef.current?.focus();
+        if (searchTerm.trim()) {
+            void searchProduct(searchTerm).then(() => {
+                if (!isFinalizing) setFocus();
+            });
         }
     };
 
-    const handleFinalizeSale = async () => {
-        if (items.length === 0) return;
-
-        setIsFinalizing(true);
-        try {
-            const payload = {
-                itens: items.map(item => ({
-                    produtoId: item.id,
-                    quantidade: item.quantidadeCarrinho
-                }))
-            };
-
-            const recibo = await salesService.createSale(payload);
-
-            toast.success(`Venda realizada! Total: R$ ${recibo.total.toFixed(2)}`);
-            clearCart();
-        } catch (error) {
-            console.error(error);
-            toast.error("Erro ao finalizar venda. Verifique o estoque.");
-        } finally {
-            setIsFinalizing(false);
+    useEffect(() => {
+        if (debouncedSearchTerm) {
+            void searchProduct(debouncedSearchTerm).then(() => {
+                if (!isFinalizing) setFocus();
+            });
         }
-    };
+    }, [debouncedSearchTerm, searchProduct, isFinalizing, setFocus]);
 
     return (
         <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)] gap-4 p-4">
@@ -100,10 +72,10 @@ export function PdvPage() {
 
             <div className="w-full lg:w-100 flex flex-col gap-4">
                 <ProductSearchInput
-                    ref={searchInputRef}
+                    ref={inputRef}
                     value={searchTerm}
                     onChange={setSearchTerm}
-                    onSearch={handleSearch}
+                    onSearch={handleManualSearch}
                     isLoading={isSearching}
                     disabled={isFinalizing}
                 />
@@ -112,7 +84,7 @@ export function PdvPage() {
                     itemCount={items.length}
                     total={getTotal()}
                     isFinalizing={isFinalizing}
-                    onFinalize={() => void handleFinalizeSale()}
+                    onFinalize={handleFinalizeSaleFlow}
                 />
             </div>
         </div>

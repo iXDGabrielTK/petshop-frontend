@@ -1,17 +1,21 @@
 import { api } from "@/lib/axios";
 import type {PageResponse} from "@/types/shared";
 import type {Movimentacao, Produto, ProdutoFilters, HistoryParams} from "@/features/inventory/types";
+import type {AxiosRequestConfig} from "axios";
 
 const BASE_URL = "/produtos";
 
 export const inventoryService = {
-    getAll: async (filters?: ProdutoFilters) => {
+    getAll: async (filters?: ProdutoFilters, config?: AxiosRequestConfig) => {
         const params = new URLSearchParams();
         if (filters?.page !== undefined) params.append("page", filters.page.toString());
         if (filters?.size) params.append("size", filters.size.toString());
         if (filters?.busca) params.append("busca", filters.busca);
 
-        const { data } = await api.get<PageResponse<Produto>>(`${BASE_URL}?${params.toString()}`);
+        const { data } = await api.get<PageResponse<Produto>>(
+            `${BASE_URL}?${params.toString()}`,
+            config
+        );
         return data;
     },
 
