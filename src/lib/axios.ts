@@ -5,6 +5,7 @@ import {handleLogout} from "@/features/auth/api/handleLogout.ts";
 import {authService} from "@/features/auth/api/authService.ts";
 import {ENV} from "@/config/env.ts";
 
+const MAX_QUEUE_SIZE = 50;
 
 export const api = axios.create({
     baseURL: ENV.API_URL,
@@ -21,20 +22,26 @@ interface OAuthErrorResponse {
     error_description?: string;
 }
 
-
+let isLoggingOut = false;
 let isRefreshing = false;
 let failedQueue: FailedQueuePromise[] = [];
 
 const processQueue = (error: unknown, token: string | null = null) => {
-    failedQueue.forEach(prom => {
-        if (error) {
-            prom.reject(error);
-        } else if (token) {
-            prom.resolve(token);
+
+    const queue = [...failedQueue];
+    failedQueue = [];
+
+    queue.forEach(prom => {
+        try {
+            if (error) {
+                prom.reject(error);
+            } else if (token) {
+                prom.resolve(token);
+            }
+        } catch (e) {
+            console.error("Queue process error:", e);
         }
     });
-
-    failedQueue = [];
 };
 
 const isInvalidRefreshToken = (error: unknown): boolean => {
@@ -63,7 +70,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     response => response,
     async (error: AxiosError) => {
-        const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+        const originalRequest = {
+            ...error.config,
+            headers: {
+                ...error.config?.headers
+            }
+        } as AxiosRequestConfig & { _retry?: boolean };
 
         if (error.response?.status !== 401 || originalRequest._retry) {
             return Promise.reject(error);
@@ -75,14 +87,36 @@ api.interceptors.response.use(
 
         if (isRefreshing) {
             return new Promise((resolve, reject) => {
+
+                if (failedQueue.length >= MAX_QUEUE_SIZE) {
+                    return reject(new Error("Sessao expirada. Recarregue a pagina.")
+                    );
+                }
+
+                const timeout = setTimeout(() => {
+                    failedQueue = failedQueue.filter(p => p.reject !== reject);
+                    reject(new Error("Refresh timeout"));
+                }, 15000);
+
                 failedQueue.push({
                     resolve: (token: string) => {
+                        clearTimeout(timeout);
+
                         if (originalRequest.headers) {
-                            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
                         }
-                        resolve(api(originalRequest));
+
+                        api(originalRequest)
+                            .then((response) => {
+                                resolve(response);
+                            })
+                            .catch((err) => {
+                                reject(err);
+                            });
                     },
+
                     reject: (err) => {
+                        clearTimeout(timeout);
                         reject(err);
                     }
                 });
@@ -117,9 +151,16 @@ api.interceptors.response.use(
         } catch (refreshError) {
 
             if (isInvalidRefreshToken(refreshError)) {
+                if (!isLoggingOut) {
+                    isLoggingOut = true;
+                    processQueue(refreshError, null);
+                    return handleLogout(refreshError);
+                }
+
                 processQueue(refreshError, null);
-                return handleLogout(refreshError);
+                return Promise.reject(refreshError);
             }
+
 
             processQueue(refreshError, null);
             return Promise.reject(refreshError);
