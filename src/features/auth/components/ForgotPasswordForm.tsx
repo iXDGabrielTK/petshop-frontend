@@ -1,4 +1,3 @@
-// src/features/auth/components/ForgotPasswordForm.tsx
 import { useForgotPassword } from "@/features/auth/hooks/useForgotPassword";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

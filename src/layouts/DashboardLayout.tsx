@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import {
     LayoutDashboard,
     Package,
@@ -9,18 +9,11 @@ import {
     Store
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/features/auth";
+import { handleLogout } from "@/features/auth/api/handleLogout";
 import {ENV} from "@/config/env.ts";
 
 export function DashboardLayout() {
     const location = useLocation();
-    const navigate = useNavigate();
-    const logout = useAuthStore((state) => state.logout);
-
-    const handleLogout = () => {
-        logout();
-        navigate("/login");
-    };
 
     const navItems = [
         { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard },
@@ -61,7 +54,8 @@ export function DashboardLayout() {
                     <Button
                         variant="outline"
                         className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={handleLogout}
+
+                        onClick={() => handleLogout()}
                     >
                         <LogOut className="h-4 w-4" />
                         Sair do Sistema

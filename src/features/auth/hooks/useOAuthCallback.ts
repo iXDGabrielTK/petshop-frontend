@@ -5,14 +5,14 @@ import { oauthApi } from "@/features/auth/hooks/oauth";
 import { toast } from "sonner";
 import { jwtDecode } from "jwt-decode";
 import type { AuthResponse, JWTPayload } from "@/features/auth/types";
-import {ENV} from "@/config/env.ts";
+import { ENV } from "@/config/env.ts";
 
 export type AuthStatus = 'loading' | 'error' | 'success';
 
 export function useOAuthCallback() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const setAuth = useAuthStore((state) => state.setAuth);
+    const { setAuth, setAuthenticating } = useAuthStore();
 
     const [status, setStatus] = useState<AuthStatus>('loading');
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -23,6 +23,8 @@ export function useOAuthCallback() {
         hasFetched.current = true;
 
         const processAuth = async () => {
+            setAuthenticating(true);
+
             const code = searchParams.get("code");
             const stateReturned = searchParams.get("state");
             const storedState = localStorage.getItem("oauth_state");
@@ -34,7 +36,7 @@ export function useOAuthCallback() {
             }
 
             if (stateReturned !== storedState) {
-                const msg = "Erro de segurança: Estado inválido.";
+                const msg = "Erro de segurança: Estado OAuth inválido (CSRF detectado).";
                 setStatus("error");
                 setErrorMessage(msg);
                 toast.error(msg);
@@ -42,7 +44,7 @@ export function useOAuthCallback() {
             }
 
             if (!verifier) {
-                const msg = "Erro de validação PKCE (Verifier não encontrado).";
+                const msg = "Erro de validação: Verificador PKCE perdido. Tente logar novamente.";
                 setStatus("error");
                 setErrorMessage(msg);
                 toast.error(msg);
@@ -50,14 +52,13 @@ export function useOAuthCallback() {
             }
 
             try {
-                const clientId = ENV.CLIENT_ID
-                const redirectUri = ENV.REDIRECT_URI
+                window.history.replaceState({}, document.title, "/authorized");
 
                 const params = new URLSearchParams({
                     grant_type: "authorization_code",
                     code,
-                    redirect_uri: redirectUri,
-                    client_id: clientId,
+                    redirect_uri: ENV.REDIRECT_URI,
+                    client_id: ENV.CLIENT_ID,
                     code_verifier: verifier
                 });
 
@@ -67,9 +68,7 @@ export function useOAuthCallback() {
                 );
 
                 const payload = jwtDecode<JWTPayload>(data.access_token);
-                console.log("🕵️ Payload do Token:", payload);
-
-                window.history.replaceState({}, document.title, "/authorized");
+                console.log("🕵️ Login Sucesso. Payload:", payload);
 
                 setAuth(
                     {
@@ -86,21 +85,26 @@ export function useOAuthCallback() {
                 localStorage.removeItem("oauth_state");
 
                 setStatus("success");
-                toast.success(`Bem-vindo de volta, ${payload.sub}!`);
+                toast.success(`Bem-vindo, ${payload.name || payload.sub}!`);
 
-                setTimeout(() => navigate("/dashboard"), 1500);
+                setTimeout(() => navigate("/dashboard", { replace: true }), 1000);
 
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Erro na autenticação:", error);
-                const msg = "Falha ao processar autenticação com o servidor.";
+                const msg = error.response?.data?.error_description || "Falha ao processar login.";
+
                 setStatus("error");
                 setErrorMessage(msg);
                 toast.error(msg);
+
+
+            } finally {
+                setAuthenticating(false);
             }
         };
 
         void processAuth();
-    }, [searchParams, navigate, setAuth]);
+    }, [searchParams, navigate, setAuth, setAuthenticating]);
 
     return { status, errorMessage };
 }

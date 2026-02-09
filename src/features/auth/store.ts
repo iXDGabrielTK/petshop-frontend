@@ -1,19 +1,17 @@
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
-import type { User } from "./types";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { User } from './types';
 
 interface AuthState {
     user: User | null;
     token: string | null;
     expiresAt: number | null;
+    isAuthenticated: boolean;
+    isAuthenticating: boolean;
     isHydrated: boolean;
 
-    setAuth: (
-        user: User,
-        token: string,
-        expiresIn: number
-    ) => void;
-
+    setAuth: (user: User | null, token: string | null, expiresIn: number | null) => void;
+    setAuthenticating: (status: boolean) => void;
     logout: () => void;
     setHydrated: () => void;
 }
@@ -24,37 +22,35 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             token: null,
             expiresAt: null,
+            isAuthenticated: false,
+            isAuthenticating: false,
             isHydrated: false,
 
-            setAuth: (user, token, expiresIn) => {
-                set({
-                    user,
-                    token,
-                    expiresAt: Date.now() + expiresIn * 1000
-                });
-            },
-
-            logout: () =>
-                set({
-                    user: null,
-                    token: null,
-                    expiresAt: null
-                }),
-
-            setHydrated: () => set({ isHydrated: true })
-        }),
-        {
-            name: "auth-storage",
-            storage: createJSONStorage(() => localStorage),
-
-            partialize: (state) => ({
-                user: state.user,
-                token: state.token,
-                expiresAt: state.expiresAt
+            setAuth: (user, token, expiresIn) => set({
+                user,
+                token,
+                expiresAt: expiresIn ? Date.now() + (expiresIn * 1000) : null,
+                isAuthenticated: !!user,
+                isAuthenticating: false
             }),
 
-            onRehydrateStorage: () => () => {
-                useAuthStore.getState().setHydrated();
+            setAuthenticating: (status) => set({ isAuthenticating: status }),
+
+            logout: () => set({
+                user: null,
+                token: null,
+                expiresAt: null,
+                isAuthenticated: false,
+                isAuthenticating: false
+            }),
+
+            setHydrated: () => set({ isHydrated: true }),
+        }),
+        {
+            name: 'auth-storage',
+
+            onRehydrateStorage: () => (state) => {
+                state?.setHydrated();
             }
         }
     )

@@ -1,20 +1,31 @@
-import {useAuthStore} from "@/features/auth/store.ts";
+import { useAuthStore } from "@/features/auth/store.ts";
+import { authService } from "@/features/auth/api/authService";
 
 let isLoggingOut = false;
 
-export const handleLogout = (reason: unknown) => {
+export const handleLogout = async (reason?: unknown) => {
     if (isLoggingOut) {
-        return Promise.reject(reason);
+        return;
     }
 
     isLoggingOut = true;
 
-    console.error("Sessão expirada:", reason);
+    if (reason) {
+        console.error("Logout acionado:", reason);
+    }
 
-    localStorage.removeItem("code_verifier");
-    localStorage.removeItem("oauth_state");
-    useAuthStore.getState().logout();
-    window.location.href = "/login";
+    try {
+        await authService.logout();
+    } catch (error) {
+        console.warn("Backend logout falhou, forçando limpeza local.");
+    } finally {
+        localStorage.removeItem("code_verifier");
+        localStorage.removeItem("oauth_state");
 
-    return Promise.reject(reason);
+        useAuthStore.getState().logout();
+
+        isLoggingOut = false;
+
+        window.location.href = "/login";
+    }
 };

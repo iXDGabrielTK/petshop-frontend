@@ -1,4 +1,3 @@
-// src/features/auth/components/ResetPasswordForm.tsx
 import { useResetPassword } from "@/features/auth/hooks/useResetPassword";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

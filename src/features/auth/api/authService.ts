@@ -1,11 +1,21 @@
-import type { AuthResponse } from "@/features/auth/types";
+import type {AuthResponse, User} from "@/features/auth/types";
 import {oauthApi} from "@/features/auth/hooks/oauth.ts";
 import {ENV} from "@/config/env.ts";
 import {generateCodeChallenge, generateRandomString} from "@/features/auth/utils/pkce.ts";
 import {api} from "@/lib/axios.ts";
-import type { ForgotPasswordSchema, ResetPasswordSchema } from "@/features/auth/utils/schemas";
+import type { ForgotPasswordSchema } from "@/features/auth/utils/schemas";
 
 let refreshPromise: Promise<AuthResponse> | null = null;
+
+async function me(): Promise<User> {
+    const { data } = await api.get<User>("/usuarios/me");
+    return data;
+}
+
+interface ResetPasswordPayload {
+    token: string;
+    newPassword: string;
+}
 
 async function refreshTokenRequest(): Promise<AuthResponse> {
     if (refreshPromise) {
@@ -13,11 +23,10 @@ async function refreshTokenRequest(): Promise<AuthResponse> {
     }
 
     refreshPromise = (async () => {
-        const clientId = ENV.CLIENT_ID;
-
         const params = new URLSearchParams();
         params.append("grant_type", "refresh_token");
-        params.append("client_id", clientId);
+
+        params.append("client_id", ENV.CLIENT_ID);
 
         const { data } = await oauthApi.post<AuthResponse>(
             "/oauth2/token",
@@ -30,8 +39,24 @@ async function refreshTokenRequest(): Promise<AuthResponse> {
 
     try {
         return await refreshPromise;
+    } catch (error: any) {
+        if (error.response?.status === 400) {
+        console.debug("Sem sessão ativa para refresh.");
+        }
+        throw error;
     } finally {
         refreshPromise = null;
+    }
+}
+
+async function logout(): Promise<void> {
+    try {
+
+        await oauthApi.post("/logout", {}, {
+            withCredentials: true
+        });
+    } catch (error) {
+        console.warn("Erro ao chamar logout no backend", error);
     }
 }
 
@@ -61,12 +86,17 @@ async function forgotPassword(data: ForgotPasswordSchema): Promise<void> {
     await api.post("/usuarios/forgot-password", data);
 }
 
-async function resetPassword(data: ResetPasswordSchema): Promise<void> {
-    await api.post("/usuarios/reset-password", data);
+async function resetPassword(data: ResetPasswordPayload): Promise<void> {
+    await api.post("/usuarios/reset-password", {
+        token: data.token,
+        password: data.newPassword
+    });
 }
 
 
 export const authService = {
+    me,
+    logout,
     refreshTokenRequest,
     loginWithRedirect,
     forgotPassword,

@@ -14,5 +14,5 @@ export const ENV = {
 };
 
 if (!ENV.API_URL || !ENV.CLIENT_ID) {
-    console.warn("⚠️ Algumas variáveis de ambiente críticas não foram definidas.");
+    throw new Error("FATAL: Variáveis de ambiente críticas ausentes.");
 }
