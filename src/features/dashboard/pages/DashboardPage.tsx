@@ -22,8 +22,10 @@ import { dashboardService, type DashboardStats } from "@/features/dashboard/api/
 export function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const loadData = async () => {
             try {
                 const data = await dashboardService.getStats();
@@ -121,8 +123,9 @@ export function DashboardPage() {
                         <CardTitle>Faturamento Semanal</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <div style={{ width: '100%', height: 300, minWidth: 0 }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="w-full min-w-0">
+                            {mounted ? (
+                                <ResponsiveContainer width="99%" height={300} aspect={3}>
                                 <BarChart data={stats.chartData}>
                                     <XAxis
                                         dataKey="name"
@@ -149,6 +152,9 @@ export function DashboardPage() {
                                     />
                                 </BarChart>
                             </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full w-full bg-gray-100 rounded animate-pulse" />
+                            )}
                         </div>
                     </CardContent>
                 </Card>
