@@ -24,11 +24,11 @@ export function DashboardLayout() {
     ];
 
     return (
-        <div className="flex min-h-screen bg-gray-100">
-            <aside className="w-64 bg-white border-r shadow-sm flex flex-col fixed inset-y-0 z-50">
-                <div className="p-6 flex items-center gap-2 border-b">
-                    <Store className="h-6 w-6 text-primary" />
-                    <span className="font-bold text-xl text-gray-800">{ENV.APP_NAME}</span>
+        <div className="flex min-h-screen bg-background">
+            <aside className="w-64 bg-sidebar border-r border-sidebar-border shadow-sm flex flex-col fixed inset-y-0 z-50">
+                <div className="p-6 flex items-center gap-2 border-b border-sidebar-border">
+                    <Store className="h-6 w-6 text-sidebar-primary" />
+                    <span className="font-bold text-xl text-sidebar-foreground">{ENV.APP_NAME}</span>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-2">
@@ -39,7 +39,9 @@ export function DashboardLayout() {
                                 <Button
                                     variant={isActive ? "default" : "ghost"}
                                     className={`w-full justify-start gap-3 ${
-                                        isActive ? "bg-primary text-white" : "text-gray-600 hover:text-primary"
+                                        isActive
+                                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                                     }`}
                                 >
                                     <item.icon className="h-4 w-4" />
@@ -50,11 +52,10 @@ export function DashboardLayout() {
                     })}
                 </nav>
 
-                <div className="p-4 border-t">
+                <div className="p-4 border-t border-sidebar-border">
                     <Button
                         variant="outline"
-                        className="w-full justify-start gap-3 text-red-600 hover:text-red-700 hover:bg-red-50"
-
+                        className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 border-sidebar-border"
                         onClick={() => handleLogout()}
                     >
                         <LogOut className="h-4 w-4" />

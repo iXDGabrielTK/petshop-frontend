@@ -17,8 +17,11 @@ import {
     ResetPasswordPage,
     ForgotPasswordPage,
 } from "@/features/auth";
+import {useThemeEffect} from "@/features/settings/hooks/useThemeEffect.ts";
 function AppRoutes() {
     const { isLoading } = useSilentRefresh();
+
+    useThemeEffect();
 
     if (isLoading) {
         return (

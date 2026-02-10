@@ -1,8 +1,16 @@
+export type Theme = 'light' | 'dark' | 'system';
+
 export interface User {
     id: string;
     name: string;
     email: string;
     roles: string[];
+    settings?: UserSettings;
+}
+
+export interface UserSettings {
+    theme: Theme;
+    notificationsEnabled?: boolean;
 }
 
 export interface AuthResponse {

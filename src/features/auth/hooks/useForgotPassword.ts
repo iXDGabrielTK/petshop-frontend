@@ -1,29 +1,23 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { api } from "@/lib/axios";
 import { toast } from "sonner";
-
-const forgotPasswordSchema = z.object({
-    email: z.string().email("Insira um e-mail válido."),
-});
-
-type ForgotPasswordFormValues = z.infer<typeof forgotPasswordSchema>;
+import { authService } from "@/features/auth";
+import { forgotPasswordSchema, type ForgotPasswordSchema } from "../utils/schemas";
 
 export function useForgotPassword() {
     const [isSuccess, setIsSuccess] = useState(false);
 
-    const form = useForm<ForgotPasswordFormValues>({
+    const form = useForm<ForgotPasswordSchema>({
         resolver: zodResolver(forgotPasswordSchema),
         defaultValues: { email: "" },
     });
 
     const { isSubmitting } = form.formState;
 
-    async function onSubmit(data: ForgotPasswordFormValues) {
+    async function onSubmit(data: ForgotPasswordSchema) {
         try {
-            await api.post("/usuarios/forgot-password", {
+            await authService.forgotPassword({
                 email: data.email
             });
 

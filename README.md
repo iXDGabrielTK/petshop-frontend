@@ -79,8 +79,10 @@ src/
 │   │   ├── hooks/       # Lógica de estado (Stores do Zustand) e Hooks customizados
 │   │   ├── pages/       # Páginas/Views completas da feature
 │   │   └── index.ts     # 🚪 API PÚBLICA (Exporta o que outras features podem usar)
+│   ├── dashboard/       # Feature de Dashboard
 │   ├── inventory/       # Feature de Estoque
 │   ├── sales/           # Feature de Vendas (PDV)
+│   ├── settings/         # Feature de Configurações
 │   └── ...
 ├── layouts/             # Wrappers de layout (Sidebar, Navbar, AuthLayout)
 ├── lib/                 # Configurações globais (Axios, Formatadores, Utils de bibliotecas)
