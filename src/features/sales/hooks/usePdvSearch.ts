@@ -1,24 +1,42 @@
 import { useState, useRef, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
-import { inventoryService } from "@/features/inventory";
+import { inventoryService, type Produto } from "@/features/inventory";
 import { useDebounce } from "@/features/sales/hooks/useDebounce";
+import { useSearchType } from "./useSearchType";
+import { searchUtils, SEARCH_DELAYS } from "../utils/searchHelpers";
 
 interface UsePdvSearchProps {
-    onProductFound: (produto: any) => void;
+    onProductFound: (produto: Produto) => void;
 }
 
 export function usePdvSearch({ onProductFound }: UsePdvSearchProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [isSearching, setIsSearching] = useState(false);
+
     const abortControllerRef = useRef<AbortController | null>(null);
+    const lastSearchRef = useRef<string>("");
 
-    const isBarcode = useMemo(() => /^\d{8,14}$/.test(searchTerm), [searchTerm]);
+    const { isBarcode, isNumeric } = useSearchType(searchTerm);
 
-    const debouncedSearchTerm = useDebounce(searchTerm, isBarcode ? 0 : 500);
+    const debounceDelay = useMemo(() => {
+        if (isBarcode) return SEARCH_DELAYS.BARCODE;
+        if (isNumeric) return SEARCH_DELAYS.NUMERIC;
+        return SEARCH_DELAYS.TEXT;
+    }, [isBarcode, isNumeric]);
+
+    const debouncedSearchTerm = useDebounce(searchTerm, debounceDelay);
 
     const searchProduct = useCallback(async (term: string) => {
-        if (!term.trim()) return;
+        const termClean = term.trim();
+
+        if (!termClean) return;
+
+        if (searchUtils.isTooShort(termClean)) return;
+
+        if (lastSearchRef.current === termClean) return;
+
+        lastSearchRef.current = termClean;
 
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -32,7 +50,7 @@ export function usePdvSearch({ onProductFound }: UsePdvSearchProps) {
 
         try {
             const result = await inventoryService.getAll(
-                { busca: term, size: 1 },
+                { busca: termClean, size: 1 },
                 { signal: controller.signal }
             );
 
@@ -43,9 +61,10 @@ export function usePdvSearch({ onProductFound }: UsePdvSearchProps) {
             if (produto) {
                 onProductFound(produto);
                 setSearchTerm("");
+                lastSearchRef.current = "";
                 toast.success(`${produto.nome} adicionado!`);
             } else {
-                if (/^\d+$/.test(term)) {
+                if (searchUtils.isNumeric(termClean) && termClean.length >= 8) {
                     toast.error("Produto não encontrado.");
                 }
             }
@@ -53,6 +72,7 @@ export function usePdvSearch({ onProductFound }: UsePdvSearchProps) {
             if (error instanceof Error && error.name === 'AbortError') return;
             if (error instanceof AxiosError && error.code === "ERR_CANCELED") return;
 
+            lastSearchRef.current = "";
             console.error("Erro na busca:", error);
         } finally {
             if (abortControllerRef.current === controller) {
