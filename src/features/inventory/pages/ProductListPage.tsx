@@ -29,7 +29,7 @@ export function ProductListPage() {
         <div className="space-y-4 p-8 pt-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-3xl font-bold tracking-tight">Produtos</h2>
-                <Button onClick={() => navigate("/inventory/products/new")}>
+                <Button onClick={() => navigate("/inventario/produtos/novo")}>
                     <Plus className="mr-2 h-4 w-4" /> Novo Produto
                 </Button>
             </div>
@@ -49,7 +49,7 @@ export function ProductListPage() {
             <ProductListTable
                 products={products}
                 isLoading={isLoading}
-                onEdit={(id) => navigate(`/inventory/products/${id}`)}
+                onEdit={(id) => navigate(`/inventario/produtos/${id}`)}
                 onDelete={handleDelete}
             />
 

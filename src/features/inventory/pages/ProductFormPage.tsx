@@ -86,7 +86,7 @@ export function ProductFormPage() {
                 toast.success("Produto cadastrado com sucesso!");
             }
 
-            navigate("/inventory/products");
+            navigate("/inventario/produtos");
         } catch (error) {
             console.error(error);
             toast.error("Erro ao salvar produto.");
@@ -96,7 +96,7 @@ export function ProductFormPage() {
     return (
         <div className="flex flex-col gap-6 p-8">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={() => navigate("/inventory/products")}>
+                <Button variant="ghost" size="icon" onClick={() => navigate("/inventario/produtos")}>
                     <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <h1 className="text-2xl font-bold tracking-tight">
