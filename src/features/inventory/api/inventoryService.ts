@@ -19,6 +19,19 @@ export const inventoryService = {
         return data;
     },
 
+    getByEan: async (ean: string, signal?: AbortSignal) => {
+        const { data } = await api.get<Produto>(`/produtos/ean/${ean}`, { signal });
+        return data;
+    },
+
+    searchByName: async (nome: string, signal?: AbortSignal) => {
+        const { data } = await api.get<PageResponse<Produto>>('/produtos', {
+            params: { nome, size: 5 },
+            signal,
+        });
+        return data;
+    },
+
     getHistory: async (params: HistoryParams): Promise<PageResponse<Movimentacao>> => {
         const query = new URLSearchParams();
         if (params.page !== undefined) query.append("page", params.page.toString());

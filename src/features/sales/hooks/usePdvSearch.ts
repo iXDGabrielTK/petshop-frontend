@@ -49,20 +49,26 @@ export function usePdvSearch({ onProductFound }: UsePdvSearchProps) {
         setIsSearching(true);
 
         try {
-            const result = await inventoryService.getAll(
-                { busca: termClean, size: 1 },
-                { signal: controller.signal }
-            );
+            let produtoEncontrado: Produto | null;
+
+            if (searchUtils.isBarcode(termClean)) {
+                produtoEncontrado = await inventoryService.getByEan(termClean, controller.signal)
+                    .catch((e) => {
+                        if (e instanceof AxiosError && e.response?.status === 404) return null;
+                        throw e;
+                    });
+            } else {
+                const result = await inventoryService.searchByName(termClean, controller.signal);
+                produtoEncontrado = result.content?.[0] || null;
+            }
 
             if (controller.signal.aborted) return;
 
-            const produto = result.content?.[0];
-
-            if (produto) {
-                onProductFound(produto);
+            if (produtoEncontrado) {
+                onProductFound(produtoEncontrado);
                 setSearchTerm("");
                 lastSearchRef.current = "";
-                toast.success(`${produto.nome} adicionado!`);
+                toast.success(`${produtoEncontrado.nome} adicionado!`);
             } else {
                 if (searchUtils.isNumeric(termClean) && termClean.length >= 8) {
                     toast.error("Produto não encontrado.");
