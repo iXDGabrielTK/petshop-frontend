@@ -1,10 +1,11 @@
-// Ajuste este import para onde seu arquivo axios.ts realmente está
 import { api } from "@/lib/axios";
 
 export interface DashboardStats {
     totalRevenue: number;
+    revenueGrowth: number;
     salesCount: number;
     lowStockCount: number;
+    activityCount: number;
     recentSales: {
         id: string;
         productName: string;

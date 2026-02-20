@@ -12,17 +12,18 @@ import {
     DollarSign,
     Package,
     Activity,
-    ArrowUpRight,
-    Loader2
+    Loader2,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { dashboardService, type DashboardStats } from "@/features/dashboard/api/dashboardService";
+import {formatGrowth, getGrowthMeta} from "@/features/dashboard/utils/growthFormatter.ts";
 
 export function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [mounted, setMounted] = useState(false);
+
 
     useEffect(() => {
         setMounted(true);
@@ -50,6 +51,9 @@ export function DashboardPage() {
 
     if (!stats) return null;
 
+    const growth = getGrowthMeta(stats.revenueGrowth);
+    const GrowthIcon = growth.icon;
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div>
@@ -69,9 +73,9 @@ export function DashboardPage() {
                         <div className="text-2xl font-bold">
                             {stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </div>
-                        <p className="text-xs text-muted-foreground flex items-center mt-1">
-                            <ArrowUpRight className="h-3 w-3 text-green-500 mr-1" />
-                            +20.1% em relação ao mês passado
+                        <p className={`text-xs flex items-center mt-1 ${growth.color}`}>
+                            <GrowthIcon className={`h-3 w-3 mr-1 ${growth.iconColor}`} />
+                            {formatGrowth(stats.revenueGrowth)} em relação ao mês passado
                         </p>
                     </CardContent>
                 </Card>
@@ -108,7 +112,7 @@ export function DashboardPage() {
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+573</div>
+                        <div className="text-2xl font-bold">+{stats.activityCount}</div>
                         <p className="text-xs text-muted-foreground mt-1">
                             Acessos ao sistema na última hora
                         </p>
