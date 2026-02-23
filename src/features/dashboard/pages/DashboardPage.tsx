@@ -57,7 +57,7 @@ export function DashboardPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                 <p className="text-muted-foreground">
                     Visão geral do desempenho da sua loja hoje.
                 </p>
@@ -129,7 +129,7 @@ export function DashboardPage() {
                     <CardContent className="pl-2">
                         <div className="w-full min-w-0">
                             {mounted ? (
-                                <ResponsiveContainer width="99%" height={300} aspect={3}>
+                                <ResponsiveContainer width="99%" aspect={2}>
                                 <BarChart data={stats.chartData}>
                                     <XAxis
                                         dataKey="name"
@@ -157,7 +157,7 @@ export function DashboardPage() {
                                 </BarChart>
                             </ResponsiveContainer>
                             ) : (
-                                <div className="h-full w-full bg-gray-100 rounded animate-pulse" />
+                                <div className="w-full aspect-2/1 bg-gray-100 rounded animate-pulse" />
                             )}
                         </div>
                     </CardContent>
