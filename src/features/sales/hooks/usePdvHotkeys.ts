@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import {useEffect, useRef} from "react";
 
 interface UsePdvHotkeysProps {
     /** Função para focar no input de busca */
@@ -17,6 +17,13 @@ export function usePdvHotkeys({
                                   isFinalizing,
                                   hasItems,
                               }: UsePdvHotkeysProps) {
+
+    const stateRef = useRef({ isFinalizing, hasItems });
+
+    useEffect(() => {
+        stateRef.current = { isFinalizing, hasItems };
+    }, [isFinalizing, hasItems]);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             // F2: Atalho para Focar no Input
@@ -28,6 +35,7 @@ export function usePdvHotkeys({
             // F9: Atalho para Finalizar Venda
             if (e.key === "F9") {
                 e.preventDefault();
+                const { hasItems, isFinalizing } = stateRef.current;
                 if (hasItems && !isFinalizing) {
                     onFinalize();
                 }
@@ -39,5 +47,5 @@ export function usePdvHotkeys({
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [onFocus, onFinalize, isFinalizing, hasItems]);
+    }, [onFocus, onFinalize]);
 }

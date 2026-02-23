@@ -2,9 +2,10 @@ import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { salesService } from "../api/salesService";
+import type { CartItem } from "@/features/sales/hooks/useCartStore";
 
 interface UsePdvSaleProps {
-    items: any[];
+    items: CartItem[];
     clearCart: () => void;
 }
 
