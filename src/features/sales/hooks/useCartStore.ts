@@ -11,10 +11,19 @@ interface CartState {
     removeItem: (productId: number) => void;
     updateQuantity: (productId: number, quantity: number) => void;
     clearCart: () => void;
-
     getTotal: () => number;
     getCount: () => number;
 }
+
+const sanitizeQuantity = (quantidade: number, unidadeMedida: string): number => {
+    const safeQuantity = Math.max(0, quantidade);
+
+    const allowsFractions = unidadeMedida === 'KG';
+
+    return allowsFractions
+        ? Number(safeQuantity.toFixed(3))
+        : Math.floor(safeQuantity);
+};
 
 export const useCartStore = create<CartState>((set, get) => ({
     items: [],
@@ -23,16 +32,24 @@ export const useCartStore = create<CartState>((set, get) => ({
         const currentItems = get().items;
         const existingItem = currentItems.find((item) => item.id === product.id);
 
+        const validQuantity = sanitizeQuantity(quantidade, product.unidadeMedida);
+        if (validQuantity <= 0) return;
+
         if (existingItem) {
             set({
-                items: currentItems.map((item) =>
-                    item.id === product.id
-                        ? { ...item, quantidadeCarrinho: item.quantidadeCarrinho + quantidade }
-                        : item
-                ),
+                items: currentItems.map((item) => {
+                    if (item.id === product.id) {
+                        const novaQuantidade = item.quantidadeCarrinho + validQuantity;
+                        return {
+                            ...item,
+                            quantidadeCarrinho: sanitizeQuantity(novaQuantidade, item.unidadeMedida)
+                        };
+                    }
+                    return item;
+                }),
             });
         } else {
-            set({ items: [...currentItems, { ...product, quantidadeCarrinho: quantidade }] });
+            set({ items: [...currentItems, { ...product, quantidadeCarrinho: validQuantity }] });
         }
     },
 
@@ -41,21 +58,28 @@ export const useCartStore = create<CartState>((set, get) => ({
     },
 
     updateQuantity: (productId, quantity) => {
-        if (quantity <= 0) {
+        const validQuantity = sanitizeQuantity(quantity, get().items.find(i => i.id === productId)?.unidadeMedida || 'UN');
+
+        if (validQuantity <= 0) {
             get().removeItem(productId);
             return;
         }
+
         set({
-            items: get().items.map((item) =>
-                item.id === productId ? { ...item, quantidadeCarrinho: quantity } : item
-            ),
+            items: get().items.map((item) => {
+                if (item.id === productId) {
+                    return { ...item, quantidadeCarrinho: validQuantity };
+                }
+                return item;
+            }),
         });
     },
 
     clearCart: () => set({ items: [] }),
 
     getTotal: () => {
-        return get().items.reduce((total, item) => total + (item.precoVenda * item.quantidadeCarrinho), 0);
+        const rawTotal = get().items.reduce((total, item) => total + (item.precoVenda * item.quantidadeCarrinho), 0);
+        return Number(rawTotal.toFixed(2));
     },
 
     getCount: () => {
